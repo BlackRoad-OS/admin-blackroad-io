@@ -1,0 +1,1130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Control Panel - BlackRoad OS</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --bg: #000000;
+            --bg-secondary: #0f0f0f;
+            --bg-tertiary: #1a1a1a;
+            --text: #ffffff;
+            --text-muted: #888888;
+            --accent-orange: #FF9D00;
+            --accent-pink: #FF0066;
+            --accent-purple: #7700FF;
+            --accent-blue: #0066FF;
+            --border: rgba(255, 255, 255, 0.1);
+            --success: #00ff00;
+            --warning: #ffff00;
+            --danger: #ff0000;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            display: flex;
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            width: 250px;
+            background: var(--bg-secondary);
+            border-right: 1px solid var(--border);
+            padding: 2rem 0;
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
+        }
+
+        .sidebar-header {
+            padding: 0 1.5rem 2rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .sidebar-header h1 {
+            font-size: 1.5rem;
+            background: linear-gradient(135deg, var(--accent-orange), var(--accent-pink), var(--accent-purple), var(--accent-blue));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .sidebar-nav {
+            padding: 1.5rem 0;
+        }
+
+        .nav-section {
+            margin-bottom: 2rem;
+        }
+
+        .nav-section-title {
+            padding: 0 1.5rem;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .nav-item {
+            padding: 0.75rem 1.5rem;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .nav-item:hover, .nav-item.active {
+            background: rgba(119, 0, 255, 0.1);
+            color: var(--accent-purple);
+            border-left: 3px solid var(--accent-purple);
+            padding-left: calc(1.5rem - 3px);
+        }
+
+        .main-content {
+            margin-left: 250px;
+            flex: 1;
+            padding: 2rem;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .header h2 {
+            font-size: 2rem;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+            font-size: 0.9rem;
+        }
+
+        .btn-primary {
+            background: var(--accent-purple);
+            color: #fff;
+        }
+
+        .btn-primary:hover {
+            background: #8800ff;
+        }
+
+        .btn-secondary {
+            background: var(--bg-secondary);
+            color: var(--text);
+            border: 1px solid var(--border);
+        }
+
+        .btn-secondary:hover {
+            border-color: var(--accent-purple);
+        }
+
+        .btn-danger {
+            background: var(--danger);
+            color: #fff;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.5rem;
+        }
+
+        .stat-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+        }
+
+        .stat-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-change {
+            font-size: 0.85rem;
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        .stat-change.up { color: var(--success); }
+        .stat-change.down { color: var(--danger); }
+
+        .card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .card-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+        }
+
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .table th {
+            text-align: left;
+            padding: 1rem;
+            border-bottom: 1px solid var(--border);
+            color: var(--text-muted);
+            font-weight: 600;
+            font-size: 0.85rem;
+        }
+
+        .table td {
+            padding: 1rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .table tr:hover {
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .badge.success { background: rgba(0, 255, 0, 0.2); color: var(--success); }
+        .badge.warning { background: rgba(255, 255, 0, 0.2); color: var(--warning); }
+        .badge.danger { background: rgba(255, 0, 0, 0.2); color: var(--danger); }
+        .badge.info { background: rgba(0, 102, 255, 0.2); color: var(--accent-blue); }
+
+        .action-btn {
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            border: none;
+            cursor: pointer;
+            font-size: 0.85rem;
+            margin-right: 0.5rem;
+        }
+
+        .action-btn.edit {
+            background: rgba(119, 0, 255, 0.2);
+            color: var(--accent-purple);
+        }
+
+        .action-btn.delete {
+            background: rgba(255, 0, 0, 0.2);
+            color: var(--danger);
+        }
+
+        .action-btn.view {
+            background: rgba(0, 102, 255, 0.2);
+            color: var(--accent-blue);
+        }
+
+        .chart-container {
+            position: relative;
+            height: 300px;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        .form-input, .form-select, .form-textarea {
+            width: 100%;
+            padding: 0.75rem;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text);
+            font-size: 1rem;
+        }
+
+        .form-textarea {
+            min-height: 120px;
+            resize: vertical;
+        }
+
+        .toggle {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 24px;
+        }
+
+        .toggle input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: var(--bg-tertiary);
+            transition: 0.3s;
+            border-radius: 24px;
+        }
+
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: 0.3s;
+            border-radius: 50%;
+        }
+
+        .toggle input:checked + .toggle-slider {
+            background-color: var(--accent-purple);
+        }
+
+        .toggle input:checked + .toggle-slider:before {
+            transform: translateX(26px);
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 2rem;
+            max-width: 600px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .modal-close {
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--text-muted);
+        }
+
+        .search-bar {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .search-input {
+            flex: 1;
+            padding: 0.75rem;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text);
+        }
+
+        .page {
+            display: none;
+        }
+
+        .page.active {
+            display: block;
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+
+            .main-content {
+                margin-left: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <h1>⚙️ Admin Panel</h1>
+        </div>
+        <nav class="sidebar-nav">
+            <div class="nav-section">
+                <div class="nav-section-title">Overview</div>
+                <div class="nav-item active" onclick="showPage('dashboard')">📊 Dashboard</div>
+                <div class="nav-item" onclick="showPage('analytics')">📈 Analytics</div>
+            </div>
+            <div class="nav-section">
+                <div class="nav-section-title">Management</div>
+                <div class="nav-item" onclick="showPage('users')">👥 Users</div>
+                <div class="nav-item" onclick="showPage('agents')">🤖 Agents</div>
+                <div class="nav-item" onclick="showPage('payments')">💳 Payments</div>
+                <div class="nav-item" onclick="showPage('deployments')">🚀 Deployments</div>
+            </div>
+            <div class="nav-section">
+                <div class="nav-section-title">System</div>
+                <div class="nav-item" onclick="showPage('settings')">⚙️ Settings</div>
+                <div class="nav-item" onclick="showPage('logs')">📝 Logs</div>
+                <div class="nav-item" onclick="showPage('api')">🔌 API Keys</div>
+            </div>
+        </nav>
+    </aside>
+
+    <main class="main-content">
+        <!-- Dashboard Page -->
+        <div id="dashboard" class="page active">
+            <div class="header">
+                <h2>Dashboard Overview</h2>
+                <div class="header-actions">
+                    <button class="btn btn-secondary">Export Report</button>
+                    <button class="btn btn-primary">+ New Deployment</button>
+                </div>
+            </div>
+
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <div class="stat-label">Total Users</div>
+                        <div class="stat-icon" style="background: rgba(119, 0, 255, 0.2);">👥</div>
+                    </div>
+                    <div class="stat-value" id="totalUsers">8,432</div>
+                    <div class="stat-change up">↑ 15.2% vs last month</div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <div class="stat-label">Active Agents</div>
+                        <div class="stat-icon" style="background: rgba(0, 102, 255, 0.2);">🤖</div>
+                    </div>
+                    <div class="stat-value" id="activeAgents">234</div>
+                    <div class="stat-change up">↑ 8 new today</div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <div class="stat-label">Revenue (MTD)</div>
+                        <div class="stat-icon" style="background: rgba(0, 255, 0, 0.2);">💰</div>
+                    </div>
+                    <div class="stat-value" id="revenue">$42,567</div>
+                    <div class="stat-change up">↑ 23.8%</div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <div class="stat-label">System Health</div>
+                        <div class="stat-icon" style="background: rgba(0, 255, 0, 0.2);">❤️</div>
+                    </div>
+                    <div class="stat-value">99.98%</div>
+                    <div class="stat-change up">All systems operational</div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">Recent Activity</h3>
+                    <button class="btn btn-secondary">View All</button>
+                </div>
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Time</th>
+                            <th>Event</th>
+                            <th>User</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="activityTable"></tbody>
+                </table>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">System Performance</h3>
+                </div>
+                <div class="chart-container">
+                    <canvas id="performanceChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Users Page -->
+        <div id="users" class="page">
+            <div class="header">
+                <h2>User Management</h2>
+                <div class="header-actions">
+                    <button class="btn btn-secondary">Export CSV</button>
+                    <button class="btn btn-primary" onclick="openModal('newUserModal')">+ Add User</button>
+                </div>
+            </div>
+
+            <div class="search-bar">
+                <input type="text" class="search-input" placeholder="Search users..." onkeyup="searchUsers(this.value)">
+                <select class="form-select" style="width: auto;">
+                    <option>All Plans</option>
+                    <option>Free</option>
+                    <option>Pro</option>
+                    <option>Enterprise</option>
+                </select>
+            </div>
+
+            <div class="card">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>User</th>
+                            <th>Email</th>
+                            <th>Plan</th>
+                            <th>Status</th>
+                            <th>Joined</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="usersTable"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Agents Page -->
+        <div id="agents" class="page">
+            <div class="header">
+                <h2>Agent Management</h2>
+                <div class="header-actions">
+                    <button class="btn btn-secondary">Refresh All</button>
+                    <button class="btn btn-primary" onclick="openModal('newAgentModal')">+ Deploy Agent</button>
+                </div>
+            </div>
+
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-label">Running Agents</div>
+                    <div class="stat-value">234</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Avg Response Time</div>
+                    <div class="stat-value">89ms</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Total Requests</div>
+                    <div class="stat-value">2.4M</div>
+                </div>
+            </div>
+
+            <div class="card">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Agent Name</th>
+                            <th>Type</th>
+                            <th>Status</th>
+                            <th>Uptime</th>
+                            <th>Requests</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="agentsTable"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Payments Page -->
+        <div id="payments" class="page">
+            <div class="header">
+                <h2>Payment Management</h2>
+                <div class="header-actions">
+                    <button class="btn btn-secondary">Download Report</button>
+                    <button class="btn btn-primary">View Stripe Dashboard</button>
+                </div>
+            </div>
+
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-label">Total Revenue</div>
+                    <div class="stat-value">$42,567</div>
+                    <div class="stat-change up">↑ $3,245 vs last month</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Active Subscriptions</div>
+                    <div class="stat-value">1,234</div>
+                    <div class="stat-change up">↑ 56 new</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Failed Payments</div>
+                    <div class="stat-value">12</div>
+                    <div class="stat-change down">Needs attention</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">MRR</div>
+                    <div class="stat-value">$38,420</div>
+                    <div class="stat-change up">↑ 18.5%</div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">Recent Transactions</h3>
+                </div>
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Customer</th>
+                            <th>Plan</th>
+                            <th>Amount</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="paymentsTable"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Deployments Page -->
+        <div id="deployments" class="page">
+            <div class="header">
+                <h2>Deployment Management</h2>
+                <div class="header-actions">
+                    <button class="btn btn-secondary">Rollback</button>
+                    <button class="btn btn-primary" onclick="openModal('newDeploymentModal')">+ New Deployment</button>
+                </div>
+            </div>
+
+            <div class="card">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Environment</th>
+                            <th>Version</th>
+                            <th>Status</th>
+                            <th>Deployed</th>
+                            <th>By</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="deploymentsTable"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Settings Page -->
+        <div id="settings" class="page">
+            <div class="header">
+                <h2>System Settings</h2>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">General Settings</h3>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Site Name</label>
+                    <input type="text" class="form-input" value="BlackRoad OS">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Admin Email</label>
+                    <input type="email" class="form-input" value="admin@blackroad.io">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Maintenance Mode</label>
+                    <label class="toggle">
+                        <input type="checkbox">
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">Stripe Integration</h3>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Publishable Key</label>
+                    <input type="text" class="form-input" value="pk_test_••••••••••••••••">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Secret Key</label>
+                    <input type="password" class="form-input" value="sk_test_••••••••••••••••">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Webhook Secret</label>
+                    <input type="password" class="form-input" value="whsec_••••••••••••••••">
+                </div>
+            </div>
+
+            <div style="display: flex; gap: 1rem;">
+                <button class="btn btn-primary">Save Changes</button>
+                <button class="btn btn-secondary">Reset</button>
+            </div>
+        </div>
+
+        <!-- Logs Page -->
+        <div id="logs" class="page">
+            <div class="header">
+                <h2>System Logs</h2>
+                <div class="header-actions">
+                    <button class="btn btn-secondary">Clear Logs</button>
+                    <button class="btn btn-primary">Export</button>
+                </div>
+            </div>
+
+            <div class="card">
+                <div style="font-family: monospace; font-size: 0.85rem; padding: 1rem; background: #000; border-radius: 8px; max-height: 600px; overflow-y: auto;" id="logsContainer"></div>
+            </div>
+        </div>
+
+        <!-- API Keys Page -->
+        <div id="api" class="page">
+            <div class="header">
+                <h2>API Key Management</h2>
+                <div class="header-actions">
+                    <button class="btn btn-primary" onclick="openModal('newApiKeyModal')">+ Generate Key</button>
+                </div>
+            </div>
+
+            <div class="card">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Key Name</th>
+                            <th>Key</th>
+                            <th>Created</th>
+                            <th>Last Used</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="apiKeysTable"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Analytics Page -->
+        <div id="analytics" class="page">
+            <div class="header">
+                <h2>Analytics</h2>
+                <div class="header-actions">
+                    <button class="btn btn-secondary">Last 7 Days</button>
+                    <button class="btn btn-secondary">Last 30 Days</button>
+                    <button class="btn btn-secondary">Custom Range</button>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">User Growth</h3>
+                </div>
+                <div class="chart-container">
+                    <canvas id="userGrowthChart"></canvas>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">Revenue Breakdown</h3>
+                </div>
+                <div class="chart-container">
+                    <canvas id="revenueChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Modals -->
+    <div id="newUserModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Add New User</h3>
+                <span class="modal-close" onclick="closeModal('newUserModal')">&times;</span>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Name</label>
+                <input type="text" class="form-input" placeholder="John Doe">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Email</label>
+                <input type="email" class="form-input" placeholder="john@example.com">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Plan</label>
+                <select class="form-select">
+                    <option>Free</option>
+                    <option>Pro</option>
+                    <option>Enterprise</option>
+                </select>
+            </div>
+            <button class="btn btn-primary">Create User</button>
+        </div>
+    </div>
+
+    <script>
+        // Navigation
+        function showPage(pageId) {
+            document.querySelectorAll('.page').forEach(page => page.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
+            document.getElementById(pageId).classList.add('active');
+            event.target.classList.add('active');
+        }
+
+        // Modal functions
+        function openModal(modalId) {
+            document.getElementById(modalId).classList.add('active');
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.remove('active');
+        }
+
+        // Populate activity table
+        const activities = [
+            { time: '2 min ago', event: 'New user signup', user: 'alice@example.com', status: 'success' },
+            { time: '15 min ago', event: 'Agent deployed', user: 'admin', status: 'success' },
+            { time: '1 hour ago', event: 'Payment received', user: 'bob@example.com', status: 'success' },
+            { time: '2 hours ago', event: 'Failed login', user: 'suspicious@example.com', status: 'danger' },
+            { time: '3 hours ago', event: 'API key generated', user: 'charlie@example.com', status: 'info' }
+        ];
+
+        document.getElementById('activityTable').innerHTML = activities.map(activity => `
+            <tr>
+                <td>${activity.time}</td>
+                <td>${activity.event}</td>
+                <td>${activity.user}</td>
+                <td><span class="badge ${activity.status}">${activity.status}</span></td>
+                <td>
+                    <button class="action-btn view">View</button>
+                </td>
+            </tr>
+        `).join('');
+
+        // Populate users table
+        const users = [
+            { name: 'Alice Johnson', email: 'alice@example.com', plan: 'Pro', status: 'active', joined: '2024-01-15' },
+            { name: 'Bob Smith', email: 'bob@example.com', plan: 'Enterprise', status: 'active', joined: '2024-02-20' },
+            { name: 'Charlie Brown', email: 'charlie@example.com', plan: 'Free', status: 'active', joined: '2024-03-10' },
+            { name: 'Diana Prince', email: 'diana@example.com', plan: 'Pro', status: 'suspended', joined: '2024-01-05' }
+        ];
+
+        document.getElementById('usersTable').innerHTML = users.map(user => `
+            <tr>
+                <td>${user.name}</td>
+                <td>${user.email}</td>
+                <td><span class="badge info">${user.plan}</span></td>
+                <td><span class="badge ${user.status === 'active' ? 'success' : 'warning'}">${user.status}</span></td>
+                <td>${user.joined}</td>
+                <td>
+                    <button class="action-btn edit">Edit</button>
+                    <button class="action-btn delete">Delete</button>
+                </td>
+            </tr>
+        `).join('');
+
+        // Populate agents table
+        const agents = [
+            { name: 'lucidia-v2', type: 'Inference', status: 'running', uptime: '99.98%', requests: '1.2M' },
+            { name: 'quantum-sim', type: 'Quantum', status: 'running', uptime: '99.92%', requests: '856K' },
+            { name: 'code-analyzer', type: 'Analysis', status: 'running', uptime: '99.99%', requests: '432K' },
+            { name: 'data-processor', type: 'Processing', status: 'stopped', uptime: '99.85%', requests: '234K' }
+        ];
+
+        document.getElementById('agentsTable').innerHTML = agents.map(agent => `
+            <tr>
+                <td>${agent.name}</td>
+                <td>${agent.type}</td>
+                <td><span class="badge ${agent.status === 'running' ? 'success' : 'danger'}">${agent.status}</span></td>
+                <td>${agent.uptime}</td>
+                <td>${agent.requests}</td>
+                <td>
+                    <button class="action-btn view">View</button>
+                    <button class="action-btn edit">Configure</button>
+                    <button class="action-btn delete">Stop</button>
+                </td>
+            </tr>
+        `).join('');
+
+        // Populate payments table
+        const payments = [
+            { date: '2024-03-15', customer: 'alice@example.com', plan: 'Pro', amount: '$49.00', status: 'paid' },
+            { date: '2024-03-15', customer: 'bob@example.com', plan: 'Enterprise', amount: '$499.00', status: 'paid' },
+            { date: '2024-03-14', customer: 'charlie@example.com', plan: 'Pro', amount: '$49.00', status: 'failed' },
+            { date: '2024-03-14', customer: 'diana@example.com', plan: 'Pro', amount: '$49.00', status: 'paid' }
+        ];
+
+        document.getElementById('paymentsTable').innerHTML = payments.map(payment => `
+            <tr>
+                <td>${payment.date}</td>
+                <td>${payment.customer}</td>
+                <td>${payment.plan}</td>
+                <td>${payment.amount}</td>
+                <td><span class="badge ${payment.status === 'paid' ? 'success' : 'danger'}">${payment.status}</span></td>
+                <td>
+                    <button class="action-btn view">View</button>
+                </td>
+            </tr>
+        `).join('');
+
+        // Populate deployments table
+        const deployments = [
+            { env: 'Production', version: 'v2.4.1', status: 'active', deployed: '2 hours ago', by: 'admin' },
+            { env: 'Staging', version: 'v2.5.0-beta', status: 'active', deployed: '1 day ago', by: 'alice' },
+            { env: 'Development', version: 'v2.5.0-alpha', status: 'active', deployed: '3 hours ago', by: 'bob' }
+        ];
+
+        document.getElementById('deploymentsTable').innerHTML = deployments.map(deployment => `
+            <tr>
+                <td>${deployment.env}</td>
+                <td><code>${deployment.version}</code></td>
+                <td><span class="badge success">${deployment.status}</span></td>
+                <td>${deployment.deployed}</td>
+                <td>${deployment.by}</td>
+                <td>
+                    <button class="action-btn view">View</button>
+                    <button class="action-btn delete">Rollback</button>
+                </td>
+            </tr>
+        `).join('');
+
+        // Populate API keys table
+        const apiKeys = [
+            { name: 'Production API', key: 'sk_live_•••••••••••••••••••••', created: '2024-01-10', lastUsed: '2 min ago' },
+            { name: 'Development API', key: 'sk_test_•••••••••••••••••••••', created: '2024-02-15', lastUsed: '1 hour ago' },
+            { name: 'Mobile App', key: 'sk_live_•••••••••••••••••••••', created: '2024-03-01', lastUsed: 'Never' }
+        ];
+
+        document.getElementById('apiKeysTable').innerHTML = apiKeys.map(key => `
+            <tr>
+                <td>${key.name}</td>
+                <td><code>${key.key}</code></td>
+                <td>${key.created}</td>
+                <td>${key.lastUsed}</td>
+                <td>
+                    <button class="action-btn view">Copy</button>
+                    <button class="action-btn delete">Revoke</button>
+                </td>
+            </tr>
+        `).join('');
+
+        // Generate logs
+        const logTypes = ['INFO', 'WARN', 'ERROR', 'DEBUG'];
+        const logMessages = [
+            'API request processed successfully',
+            'Database connection established',
+            'Cache miss for key: user:1234',
+            'Rate limit exceeded for IP: 192.168.1.1',
+            'Authentication token validated',
+            'Webhook received from Stripe',
+            'Agent deployment initiated',
+            'Performance threshold exceeded'
+        ];
+
+        function generateLogs() {
+            const logs = [];
+            for (let i = 0; i < 50; i++) {
+                const type = logTypes[Math.floor(Math.random() * logTypes.length)];
+                const message = logMessages[Math.floor(Math.random() * logMessages.length)];
+                const timestamp = new Date(Date.now() - Math.random() * 3600000).toISOString();
+                const color = type === 'ERROR' ? '#ff0000' : type === 'WARN' ? '#ffff00' : type === 'INFO' ? '#00ff00' : '#888888';
+                logs.push(`<div style="color: ${color};">[${timestamp}] [${type}] ${message}</div>`);
+            }
+            document.getElementById('logsContainer').innerHTML = logs.join('');
+        }
+
+        generateLogs();
+
+        // Charts
+        const chartDefaults = {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    labels: { color: '#888888' }
+                }
+            },
+            scales: {
+                y: {
+                    grid: { color: 'rgba(255, 255, 255, 0.1)' },
+                    ticks: { color: '#888888' }
+                },
+                x: {
+                    grid: { display: false },
+                    ticks: { color: '#888888' }
+                }
+            }
+        };
+
+        // Performance Chart
+        const labels = Array.from({ length: 24 }, (_, i) => `${i}:00`);
+        const data = Array.from({ length: 24 }, () => Math.floor(Math.random() * 1000 + 500));
+
+        new Chart(document.getElementById('performanceChart'), {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Requests/Hour',
+                    data: data,
+                    borderColor: '#7700FF',
+                    backgroundColor: 'rgba(119, 0, 255, 0.1)',
+                    fill: true,
+                    tension: 0.4
+                }]
+            },
+            options: chartDefaults
+        });
+
+        // User Growth Chart
+        const userGrowthLabels = Array.from({ length: 30 }, (_, i) => {
+            const date = new Date();
+            date.setDate(date.getDate() - (29 - i));
+            return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        });
+
+        new Chart(document.getElementById('userGrowthChart'), {
+            type: 'line',
+            data: {
+                labels: userGrowthLabels,
+                datasets: [{
+                    label: 'New Users',
+                    data: Array.from({ length: 30 }, () => Math.floor(Math.random() * 100 + 50)),
+                    borderColor: '#0066FF',
+                    backgroundColor: 'rgba(0, 102, 255, 0.1)',
+                    fill: true,
+                    tension: 0.4
+                }]
+            },
+            options: chartDefaults
+        });
+
+        // Revenue Chart
+        new Chart(document.getElementById('revenueChart'), {
+            type: 'bar',
+            data: {
+                labels: ['Free', 'Pro', 'Enterprise'],
+                datasets: [{
+                    label: 'Revenue',
+                    data: [0, 28400, 14167],
+                    backgroundColor: ['#888888', '#7700FF', '#FF0066']
+                }]
+            },
+            options: {
+                ...chartDefaults,
+                plugins: {
+                    legend: { display: false }
+                }
+            }
+        });
+
+        // Real-time updates
+        setInterval(() => {
+            const stats = ['totalUsers', 'activeAgents', 'revenue'];
+            stats.forEach(stat => {
+                const el = document.getElementById(stat);
+                if (el) {
+                    const current = el.textContent.replace(/[^0-9]/g, '');
+                    if (stat === 'totalUsers') {
+                        el.textContent = (parseInt(current) + Math.floor(Math.random() * 3)).toLocaleString();
+                    } else if (stat === 'revenue') {
+                        el.textContent = '$' + (parseInt(current) + Math.floor(Math.random() * 100)).toLocaleString();
+                    }
+                }
+            });
+        }, 5000);
+
+        // Search users
+        function searchUsers(query) {
+            const rows = document.querySelectorAll('#usersTable tr');
+            rows.forEach(row => {
+                const text = row.textContent.toLowerCase();
+                row.style.display = text.includes(query.toLowerCase()) ? '' : 'none';
+            });
+        }
+    </script>
+</body>
+</html>
